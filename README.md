@@ -8,6 +8,17 @@ This Git repository hosts the official code for 'Improved Shape Deformation in U
 
 We are just setting up the repo, and we will fill in details about datasets and pre-build models soon. Thank you for your patience.
 
+# Bibtex
+
+```
+@inproceedings{Gokaslan2018,
+  title={Improved Shape Deformation in Unsupervised Image to Image Translation},
+  author={Aaron Gokaslan, Vivek Ramanujan, Daniel Ritchie, Kwang In Kim, and James Tompkin},
+  booktitle={European Conference on Computer Vision},
+  year={2018}
+}
+```
+
 # Dataset
 The Microsoft Research Kaggle Cat vs. Dog Dataset serves as an excellent demo. Simply download the dataset and remove 128 examples from the holdout list.
 
