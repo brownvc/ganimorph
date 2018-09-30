@@ -1,4 +1,4 @@
-# GANimorph: Improved Shape Deformation in Unsupervised Image to Image Translation
+# GANimorph: Improving Shape Deformation in Unsupervised Image to Image Translation
 
 This Git repository hosts the official code for 'Improved Shape Deformation in Unsupervised Image to Image Translation', by Aaron Gokaslan, Vivek Ramanujan, [Daniel Ritchie](https://dritchie.github.io/), Kwang In Kim, and [James Tompkin](www.jamestompkin.com), to be published at [ECCV 2018](https://eccv2018.org/).
 
