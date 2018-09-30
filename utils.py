@@ -1,7 +1,7 @@
 from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorflow as tf
-
+import numpy as np
 
 SHAPE = 128
 BATCH = 16

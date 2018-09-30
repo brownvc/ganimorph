@@ -1,3 +1,5 @@
+import tensorflow as tf
+from tensorflow.python.training import moving_averages
 from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary
@@ -27,13 +29,13 @@ class Model(GANModelDesc):
             l = (LinearWrap(tf.concat([l, input], axis=1))
                     .Conv2D('conv2', chan, stride=1, kernel_shape=3)())
             return l
-                    
+
     def generator(self, img):
         with argscope([Conv2D, Deconv2D],
                       nl=INLReLU, kernel_shape=4, stride=2), \
                 argscope(Deconv2D, nl=INReLU):
-            
-            def res_group(input, name, depth, channels): 
+
+            def res_group(input, name, depth, channels):
                 l = input
                 for k in range(depth):
                   l = Model.build_res_block(l, name + ('/res%d' % k), channels,
@@ -50,7 +52,7 @@ class Model(GANModelDesc):
             l = res_group(conv3, 'layer3', subDepth, NF*8)
             deconv0 = Deconv2D('deconv0', l, NF * 4)
             up1 = tf.concat([deconv0, layer2], axis=1)
-            b_layer_2 = res_group(up1, 'blayer2', subDepth, NF * 4) 
+            b_layer_2 = res_group(up1, 'blayer2', subDepth, NF * 4)
             deconv1 = Deconv2D('deconv1', b_layer_2, NF * 2)
             up2 = tf.concat([deconv1, layer1], axis=1)
             b_layer_1 = res_group(up2, 'blayer1', subDepth, NF * 2)
@@ -63,23 +65,23 @@ class Model(GANModelDesc):
             l = Conv2D('conv0', img, NF*2, nl=LeakyReLU)
             relu1 = Conv2D('conv1', l, NF * 4)
             relu2 = Conv2D('conv2', relu1, NF * 8)
-            
+
             relu3 = Conv2D('convf', relu2, NF*8, kernel_shape=3, stride=1)
             atrous = tf.contrib.layers.conv2d(relu3, NF*8, kernel_size=3,
-                    data_format='NCHW', rate=2, 
+                    data_format='NCHW', rate=2,
                     activation_fn=INLReLU, biases_initializer=None)
             atrous2 = tf.contrib.layers.conv2d(atrous, NF*8, kernel_size=3,
-                    data_format='NCHW', rate=4, 
+                    data_format='NCHW', rate=4,
                     activation_fn=INLReLU, biases_initializer=None)
             atrous3 = tf.contrib.layers.conv2d(atrous2, NF*8, kernel_size=3,
-                    data_format='NCHW', rate=8, 
+                    data_format='NCHW', rate=8,
                     activation_fn=INLReLU, biases_initializer=None)
             merge = tf.concat([relu3, atrous3], axis=1)
-            clean = Conv2D('mConv', merge, NF*8, kernel_shape=3, stride=1) 
+            clean = Conv2D('mConv', merge, NF*8, kernel_shape=3, stride=1)
             lsgan = Conv2D('lsconv', clean, 1, stride=1, nl=tf.identity,
                     use_bias=False)
-            
-            
+
+
         return lsgan, [relu1, relu2, relu3, atrous, atrous2, atrous3, clean]
 
     def get_feature_match_loss(self, feats_real, feats_fake):
@@ -97,10 +99,10 @@ class Model(GANModelDesc):
     def loss_normalize(self, loss, update_condition, epsilon=1e-10):
         # Variable used for storing the scalar-value of the loss-function.
         loss_value = tf.Variable(1.0, name='loss_scalar_val_' + loss.op.name)
-        
+
         loss_value_smooth = (tf.Variable(1.0, name='loss_smooth_' +
                 loss.op.name))
-        
+
         #TODO don't update if is_training
         ma_loss_value = (
             moving_averages.assign_moving_average(
@@ -140,7 +142,7 @@ class Model(GANModelDesc):
         gradients = tf.gradients(D_inter, [interpolates])[0]
         slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), reduction_indices=[1]))
         gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2,
-        name='grad_penalty_red') 
+        name='grad_penalty_red')
         return tf.identity(gradient_penalty * 0.25, name='grad_penalty')
 
     def _build_graph(self, inputs):
@@ -174,7 +176,7 @@ class Model(GANModelDesc):
                     ABA = self.generator(AB)
                 with tf.variable_scope('B', reuse=True):
                     BAB = self.generator(BA)
-                    
+
             viz3('A_recon', A, AB, ABA)
             viz3('B_recon', B, BA, BAB)
 
@@ -212,11 +214,11 @@ class Model(GANModelDesc):
             D_loss_A = self.d_loss
             # feature matching loss
             fm_loss_A = self.get_feature_match_loss(A_feats_real, A_feats_fake)
-			
+
 
         with tf.name_scope('LossB'):
             recon_loss_B = tf_dssim(B, BAB)
-            
+
             recon_loss_B_l = tf.losses.absolute_difference(B, BAB,
                     reduction=tf.losses.Reduction.MEAN)
 
@@ -225,7 +227,7 @@ class Model(GANModelDesc):
             G_loss_B = self.g_loss
             D_loss_B = self.d_loss# + grad_penalty_B
             fm_loss_B = self.get_feature_match_loss(B_feats_real, B_feats_fake)
-			
+
 
         global_step = get_global_step_var()
         rate = tf.train.piecewise_constant(global_step, [np.int64(15000), np.int64(25000), np.int64(50000), np.int64(100000)], [0.01, 0.10, 0.15, 0.20, 0.25])
@@ -233,7 +235,7 @@ class Model(GANModelDesc):
         loss_update = tf.logical_or(tf.equal(global_step, tf.constant(36,
             dtype=np.int64)), tf.equal(global_step % 90, tf.constant(0, dtype=np.int64)))
         rate = tf.constant(0.33, np.float32, name='static_rate')
-        
+
         g_loss = tf.add_n([
             (self.loss_normalize(G_loss_A + G_loss_B, loss_update) * 0.7 +
             self.loss_normalize(fm_loss_A + fm_loss_B, loss_update) * 0.3) * (1 - rate),
@@ -245,8 +247,8 @@ class Model(GANModelDesc):
 
         self.collect_variables('gen', 'discrim')
 
-        self.g_loss = g_loss 
-        self.d_loss = d_loss 
+        self.g_loss = g_loss
+        self.d_loss = d_loss
 
         add_moving_summary(recon_loss_A, recon_loss_B, rate, g_loss, d_loss,
                 recon_loss_A_l, recon_loss_B_l)
