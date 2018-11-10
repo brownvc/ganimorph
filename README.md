@@ -13,7 +13,7 @@ We are just setting up the repo, and we will fill in details about datasets and 
 ```
 @inproceedings{Gokaslan2018,
   title={Improved Shape Deformation in Unsupervised Image to Image Translation},
-  author={Aaron Gokaslan, Vivek Ramanujan, Daniel Ritchie, Kwang In Kim, and James Tompkin},
+  author={Aaron Gokaslan and Vivek Ramanujan and Daniel Ritchie and Kwang In Kim, and James Tompkin},
   booktitle={European Conference on Computer Vision},
   year={2018}
 }
