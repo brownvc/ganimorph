@@ -1,3 +1,5 @@
+import os
+from glob import glob
 from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorflow as tf
@@ -16,12 +18,12 @@ def INReLU(x, name=None):
 
 def INLReLU(x, name=None):
     x = InstanceNorm('inorm', x)
-    return LeakyReLU(x, name=name)
+    return tf.nn.relu(x, name=name)
 
 
 def BNLReLU(x, name):
     x = BatchNorm('bn', x)
-    return LeakyReLU(x)
+    return tf.nn.relu(x)
 
 
 def _tf_fspecial_gauss(size, sigma):
@@ -152,13 +154,15 @@ def get_data(datadir, isTrain=True):
     return df
 
 class VisualizeTestSet(Callback):
+    def __init__(self, data):
+        self.data = data
+
     def _setup_graph(self):
         self.pred = self.trainer.get_predictor(
             ['inputA', 'inputB'], ['viz_A_recon', 'viz_B_recon'])
 
     def _before_train(self):
-        global args
-        self.val_ds = get_data(args.data, isTrain=False)
+        self.val_ds = get_data(self.data, isTrain=False)
 
     def _trigger(self):
         idx = 0

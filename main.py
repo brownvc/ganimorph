@@ -42,8 +42,8 @@ if __name__ == '__main__':
         model=Model(),
         dataflow=data,
         callbacks=[
-            PeriodicTrigger(ModelSaver(), every_k_epochs=20), 
-            PeriodicTrigger(VisualizeTestSet(), every_k_epochs=3),
+            PeriodicTrigger(ModelSaver(), every_k_epochs=20),
+            PeriodicTrigger(VisualizeTestSet(args.data), every_k_epochs=3),
             ScheduledHyperParamSetter(
                                 'learning_rate',
                                 [(150, 2e-4), (300, 0)], interp='linear')],

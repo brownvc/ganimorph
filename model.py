@@ -14,10 +14,9 @@ TEST_BATCH = 32
 NF = 64  # channel size
 
 class Model(GANModelDesc):
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'inputA'),
-                InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'inputB')]
-
+    def inputs(self):
+        return [tf.placeholder(tf.float32, (None, SHAPE, SHAPE, 3), 'inputA'),
+                tf.placeholder(tf.float32, (None, SHAPE, SHAPE, 3), 'inputB')]
 
     @staticmethod
     def build_res_block(x, name, chan, first=False):
@@ -43,7 +42,7 @@ class Model(GANModelDesc):
                 return l
 
             subDepth = 3
-            conv0 = Conv2D('conv0', img, NF, nl=LeakyReLU)
+            conv0 = Conv2D('conv0', img, NF, nl=tf.nn.relu)
             conv1 = Conv2D('conv1', conv0, NF * 2)
             layer1 = res_group(conv1, 'layer1', subDepth, NF*2)
             conv2 = Conv2D('conv2', layer1, NF * 4)
@@ -62,7 +61,7 @@ class Model(GANModelDesc):
 
     def discriminator(self, img):
         with argscope(Conv2D, nl=INLReLU, kernel_shape=4, stride=2):
-            l = Conv2D('conv0', img, NF*2, nl=LeakyReLU)
+            l = Conv2D('conv0', img, NF*2, nl=tf.nn.relu)
             relu1 = Conv2D('conv1', l, NF * 4)
             relu2 = Conv2D('conv2', relu1, NF * 8)
 
@@ -145,8 +144,8 @@ class Model(GANModelDesc):
         name='grad_penalty_red')
         return tf.identity(gradient_penalty * 0.25, name='grad_penalty')
 
-    def _build_graph(self, inputs):
-        A, B = inputs
+    def build_graph(self, A, B):
+        #A, B = inputs
         A = tf.transpose(A / 255.0, [0, 3, 1, 2])
         B = tf.transpose(B / 255.0, [0, 3, 1, 2])
 
@@ -165,8 +164,9 @@ class Model(GANModelDesc):
                       W_init=tf.contrib.layers.variance_scaling_initializer(factor=0.333, uniform=True),
                       use_bias=False), \
                 argscope(BatchNorm, gamma_init=tf.random_uniform_initializer()), \
-                argscope([Conv2D, Deconv2D, BatchNorm, InstanceNorm], data_format='NCHW'), \
-                argscope(LeakyReLU, alpha=0.2):
+                argscope([Conv2D, Deconv2D, BatchNorm, InstanceNorm],
+                        data_format='NCHW'):
+                #argscope(LeakyReLU, alpha=0.2):
             with tf.variable_scope('gen'):
                 with tf.variable_scope('B'):
                     AB = self.generator(A)
@@ -243,7 +243,7 @@ class Model(GANModelDesc):
                 0.7 +
 				self.loss_normalize((recon_loss_A_l + recon_loss_B_l),
                     loss_update) * 0.3) * rate], name='G_loss_total')
-        d_loss = tf.add_n([D_loss_A, D_loss_B], name='D_loss_total')
+        d_loss = tf.add(D_loss_A, D_loss_B, name='D_loss_total')
 
         self.collect_variables('gen', 'discrim')
 
@@ -253,6 +253,8 @@ class Model(GANModelDesc):
         add_moving_summary(recon_loss_A, recon_loss_B, rate, g_loss, d_loss,
                 recon_loss_A_l, recon_loss_B_l)
 
-    def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-4, summary=True)
+    def optimizer(self):
+        lr = tf.get_variable('learning_rate', initializer=2e-4,
+                 trainable=False)
         return tf.train.AdamOptimizer(lr, beta1=0.5)
+
