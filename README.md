@@ -25,5 +25,5 @@ The Microsoft Research Kaggle Cat vs. Dog Dataset serves as an excellent demo. S
 # Dependencies
 
 Tensorflow > 1.2 (GPU strongly recomended)
-This repo uses the Tensorpack library and this particular has been updated to work with newer versions of Tensorpack.
+This repo uses the Tensorpack library and this particular has been updated to work with Tensorpack 0.8.9.
 See the other branch to see the original version that worked only with Tensorflow version <=1.3.

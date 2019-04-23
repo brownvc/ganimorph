@@ -97,10 +97,11 @@ class Model(GANModelDesc):
 
     def loss_normalize(self, loss, update_condition, epsilon=1e-10):
         # Variable used for storing the scalar-value of the loss-function.
-        loss_value = tf.Variable(1.0, name='loss_scalar_val_' + loss.op.name)
+        loss_value = tf.Variable(1.0, name='loss_scalar_val_' + loss.op.name,
+                trainable=False)
 
         loss_value_smooth = (tf.Variable(1.0, name='loss_smooth_' +
-                loss.op.name))
+                loss.op.name, trainable=False))
 
         #TODO don't update if is_training
         ma_loss_value = (

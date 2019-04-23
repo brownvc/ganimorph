@@ -38,9 +38,9 @@ args = parser.parse_args()
 if __name__ == '__main__':
     logger.auto_set_dir()
     data = get_data(args.data)
-    config = TrainConfig(
-        model=Model(),
-        dataflow=data,
+    data = QueueInput(data)
+    # train 1 D after 2 G
+    SeparateGANTrainer(data, Model(),2).train_with_defaults(
         callbacks=[
             PeriodicTrigger(ModelSaver(), every_k_epochs=20),
             PeriodicTrigger(VisualizeTestSet(args.data), every_k_epochs=3),
@@ -48,12 +48,9 @@ if __name__ == '__main__':
                                 'learning_rate',
                                 [(150, 2e-4), (300, 0)], interp='linear')],
         steps_per_epoch=1000,
-        max_epoch=300,
         session_init=SaverRestore(args.load) if args.load else None
     )
-
-    # train 1 D after 2 G
-    SeparateGANTrainer(config, 2).train()
+    #SeparateGANTrainer(config, 2).train()
     # If you want to run across GPUs use code similar to below.
     #nr_gpu = get_nr_gpu()
     #config.nr_tower = max(get_nr_gpu(), 1)
